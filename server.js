@@ -21,11 +21,34 @@ console.log("The Https server is up and running");
 
 //create webSocket Server
 
-wss = new webSocketServer({SERVER:sslSvr});
+wss = new webSocketServer({server:sslSvr});
 console.log("WebSocket secure erver is up and running");
 
 //succesful connection
 
 wss.on('connection', function(client){
     console.log("A new web Socket client was connected");
+//incoming messages
+client.on('message', function(message){
+    //broadcast message to all clients
+    wss.broadcast(message, client);
 });
+});
+
+//broadcating the message to all WebSocket clients
+
+wss.broadcast = function(data, exclude){
+    var i = 0,
+    var n = this.client ? this.client.length : 0;
+    var client = null;
+
+    if(n<1) return;
+    console.log("Broadcasting message to all "+n+" webSocket client.");
+    for(; i<n; i++){
+        client= this.client[i];
+        // don't send the message to the sender...
+    if (client === exclude) continue;
+    if (client.readyState === client.OPEN) client.send(data);
+    else console.error('Error: the client state is ' + client.readyState);
+  }
+};
